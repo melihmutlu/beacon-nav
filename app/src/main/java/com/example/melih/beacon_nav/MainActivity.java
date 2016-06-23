@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
             address.add("E0:2E:E2:ED:86:64");
             address.add("D0:8B:08:63:C4:61");
             address.add("FC:73:08:31:50:42");
+            address.add("0C:D2:92:2E:5C:9C");   // MELIH-PC
             String action = intent.getAction();
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
