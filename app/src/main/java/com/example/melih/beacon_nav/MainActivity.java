@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean state = true;
     private ArrayAdapter adapter;
     private ArrayList<String> results ;
-    private double txPower = -8.0;
+    private double txPower = -59.0;
     private String beaconAddress ;
     private int counter = 0;
     private BluetoothAdapter mBTAdapter;
