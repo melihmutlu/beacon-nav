@@ -11,12 +11,13 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static android.bluetooth.BluetoothAdapter.ACTION_DISCOVERY_FINISHED;
 import static android.bluetooth.BluetoothAdapter.ACTION_DISCOVERY_STARTED;
@@ -28,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private double txPower = -59.0;
     private BluetoothAdapter BTAdapter;
     private BluetoothLeScanner BTLE;
-    private ArrayAdapter adapter;
+    private DeviceAdapter adapter;
     private Button scanBtn;
     private ListView listView;
     private List<ScanResult> resultLE;
@@ -62,6 +63,9 @@ public class MainActivity extends AppCompatActivity {
                         listItems.put(result.getDevice().getAddress() , result);
                         //TODO custom adapter
                         //adapter = new ArrayAdapter<>(MainActivity.this, R.layout.main_list, listItems);
+                        ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
+                        list.addAll(listItems.entrySet());
+                        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
                         listView.setAdapter(adapter);
                         Log.d("INFO", "device: " + result.getDevice() + ", rss: " + result.getRssi());
                     }
