@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /** Called just before the activity is destroyed.  */
+    /** Called just before the activity is destroyed. */
     @Override
     public void onDestroy() {
         if(BTAdapter.isDiscovering())
