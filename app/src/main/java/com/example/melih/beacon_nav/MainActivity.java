@@ -28,7 +28,6 @@ import static android.bluetooth.BluetoothAdapter.getDefaultAdapter;
 public class MainActivity extends AppCompatActivity {
 
     HashMap<String, ScanResult> listItems=new HashMap<String, ScanResult>();
-    private double txPower = -59.0;
     private BluetoothAdapter BTAdapter;
     private BluetoothLeScanner BTLE;
     private DeviceAdapter adapter;
@@ -54,8 +53,6 @@ public class MainActivity extends AppCompatActivity {
         deviceFilter.add("D4:22:FF:09:00:E9");
 
 
-
-
         if(!BTAdapter.isEnabled()) // enable bluetooth
             BTAdapter.enable();
 
@@ -72,9 +69,7 @@ public class MainActivity extends AppCompatActivity {
                 ScanCallback scanCallback = new ScanCallback() {
                     @Override
                     public void onScanResult(int callbackType, ScanResult result) {
-                       // if(deviceFilter.contains(result.getDevice().getAddress()))
-                            listItems.put(result.getDevice().getAddress() , result);
-                        //TODO custom adapter
+                        listItems.put(result.getDevice().getAddress() , result);
                         ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
                         list.addAll(listItems.entrySet());
                         adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
