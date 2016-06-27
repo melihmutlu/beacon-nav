@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private Button scanBtn;
     private ListView listView;
     private List<ScanResult> resultLE;
+    private ArrayList<String> deviceFilter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,8 +43,15 @@ public class MainActivity extends AppCompatActivity {
         listView = (ListView) findViewById(R.id.list);
         BTAdapter = getDefaultAdapter();
         BTLE = BTAdapter.getBluetoothLeScanner();
+        deviceFilter = new ArrayList<>();
+        // addresses to filter
+        deviceFilter.add("D0:30:AD:84:07:40");
+        deviceFilter.add("E0:2E:E2:ED:86:64");
+        deviceFilter.add("D0:8B:08:63:C4:61");
+        deviceFilter.add("FC:73:08:31:50:42");
+        deviceFilter.add("D4:22:FF:09:00:E9");
 
-        if(!BTAdapter.isEnabled())
+        if(!BTAdapter.isEnabled()) // enable bluetooth
             BTAdapter.enable();
 
         scanBtn.setOnClickListener(new View.OnClickListener() {
@@ -54,20 +62,19 @@ public class MainActivity extends AppCompatActivity {
                 IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
                 filter.addAction(ACTION_DISCOVERY_FINISHED);
                 filter.addAction(ACTION_DISCOVERY_STARTED);
-                //registerReceiver(bReceiver, filter);
                 Log.d("INFO", "start ");
 
                 ScanCallback scanCallback = new ScanCallback() {
                     @Override
                     public void onScanResult(int callbackType, ScanResult result) {
-                        listItems.put(result.getDevice().getAddress() , result);
+                       // if(deviceFilter.contains(result.getDevice().getAddress()))
+                            listItems.put(result.getDevice().getAddress() , result);
                         //TODO custom adapter
-                        //adapter = new ArrayAdapter<>(MainActivity.this, R.layout.main_list, listItems);
                         ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
                         list.addAll(listItems.entrySet());
                         adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
                         listView.setAdapter(adapter);
-                        Log.d("INFO", "device: " + result.getDevice() + ", rss: " + result.getRssi());
+                        Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi() );
                     }
                 };
                 BTLE.startScan(scanCallback);
@@ -85,8 +92,4 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    protected double calculateAccuracy(double rssi) {
-        return Math.pow(10d, ( txPower - rssi) / (10 * 2));
-
-    }
 }
