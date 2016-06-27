@@ -54,15 +54,12 @@ public class MainActivity extends AppCompatActivity {
                 IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
                 filter.addAction(ACTION_DISCOVERY_FINISHED);
                 filter.addAction(ACTION_DISCOVERY_STARTED);
-                //registerReceiver(bReceiver, filter);
                 Log.d("INFO", "start ");
 
                 ScanCallback scanCallback = new ScanCallback() {
                     @Override
                     public void onScanResult(int callbackType, ScanResult result) {
                         listItems.put(result.getDevice().getAddress() , result);
-                        //TODO custom adapter
-                        //adapter = new ArrayAdapter<>(MainActivity.this, R.layout.main_list, listItems);
                         ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
                         list.addAll(listItems.entrySet());
                         adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
