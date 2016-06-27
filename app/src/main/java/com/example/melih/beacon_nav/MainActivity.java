@@ -5,7 +5,9 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -51,6 +53,9 @@ public class MainActivity extends AppCompatActivity {
         deviceFilter.add("FC:73:08:31:50:42");
         deviceFilter.add("D4:22:FF:09:00:E9");
 
+
+
+
         if(!BTAdapter.isEnabled()) // enable bluetooth
             BTAdapter.enable();
 
@@ -77,7 +82,9 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi() );
                     }
                 };
-                BTLE.startScan(scanCallback);
+                ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
+                ArrayList<ScanFilter> filters = new ArrayList<>();
+                BTLE.startScan(filters, settings, scanCallback);
                 scanCallback.onBatchScanResults(resultLE);
 
             }});
