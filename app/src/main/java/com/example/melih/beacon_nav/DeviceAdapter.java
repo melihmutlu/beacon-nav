@@ -55,11 +55,11 @@ public class DeviceAdapter extends ArrayAdapter {
         int txp = -(256 - Integer.parseInt(txValue.substring(0,txValue.length()-1),16));
         int rss = mDevices.get(position).getValue().getRssi();
 
-        name.setText(mDevices.get(position).getValue().getScanRecord().getDeviceName());
+        name.setText(mDevices.get(position).getValue().getDevice().getAddress());
         rssi.setText("rssi    : " + rss + "");
         tx.setText( "tx power: " + txp);
         dist.setText("distance: " + MainActivity.calculateAccuracy(txp, rss));
-        avgdist.setText("average : ");
+        avgdist.setText("average : " + MainActivity.calculateAccuracy(txp, MainActivity.getAverage(mDevices.get(position).getValue().getDevice().getAddress())));
 
         return convertView;
     }

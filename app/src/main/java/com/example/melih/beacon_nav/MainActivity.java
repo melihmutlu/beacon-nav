@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
     private Button scanBtn;
     private ListView listView;
     private List<ScanResult> resultLE;
-    private ArrayList<String> deviceFilter;
+    private static Map<String, Queue<Integer>> positionCache;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,14 +46,6 @@ public class MainActivity extends AppCompatActivity {
         listView = (ListView) findViewById(R.id.list);
         BTAdapter = getDefaultAdapter();
         BTLE = BTAdapter.getBluetoothLeScanner();
-        deviceFilter = new ArrayList<>();
-        // addresses to filter
-        deviceFilter.add("D0:30:AD:84:07:40");
-        deviceFilter.add("E0:2E:E2:ED:86:64");
-        deviceFilter.add("D0:8B:08:63:C4:61");
-        deviceFilter.add("FC:73:08:31:50:42");
-        deviceFilter.add("D4:22:FF:09:00:E9");
-
 
         if(!BTAdapter.isEnabled()) // enable bluetooth
             BTAdapter.enable();
@@ -61,18 +53,36 @@ public class MainActivity extends AppCompatActivity {
         scanBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                positionCache = new HashMap<String, Queue<Integer>>();
+                positionCache.put("D0:30:AD:84:07:40", new LinkedList<Integer>());  //orta
+                positionCache.put("E0:2E:E2:ED:86:64", new LinkedList<Integer>());  //sağ
+                positionCache.put("FC:73:08:31:50:42", new LinkedList<Integer>());  //üst
+
                 if(BTAdapter.isDiscovering())
                     BTAdapter.cancelDiscovery();
-                IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-                filter.addAction(ACTION_DISCOVERY_FINISHED);
-                filter.addAction(ACTION_DISCOVERY_STARTED);
                 Log.d("INFO", "start ");
 
                 ScanCallback scanCallback = new ScanCallback() {
                     @Override
                     public void onScanResult(int callbackType, ScanResult result) {
-                        listItems.put(result.getDevice().getAddress() , result);
+
+                        String address = result.getDevice().getAddress();
+
+                        if (positionCache.containsKey(address)) {
+                            Queue<Integer> q = positionCache.get(address);
+                            if (q == null) q = new LinkedList<Integer>();
+                            if (q.size() < 20) {
+                                q.add(result.getRssi());
+                            } else {
+                                q.poll();
+                                q.add(result.getRssi());
+                            }
+                        }
+
                         ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
+
+                        listItems.put(result.getDevice().getAddress() , result);
                         list.addAll(listItems.entrySet());
                         adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
                         listView.setAdapter(adapter);
@@ -110,6 +120,20 @@ public class MainActivity extends AppCompatActivity {
             double accuracy =  (0.89976)*Math.pow(ratio,7.7095) + 0.111;
             return accuracy;
         }
+    }
+
+    public static double getAverage(String s) {
+
+        if ( !positionCache.containsKey(s) ) return 0;
+
+        double mean = 0;
+        Queue<Integer> cache = positionCache.get(s);
+
+        for (int i : cache) {
+            mean = mean + i;
+        }
+        mean = mean / cache.size();
+        return mean;
     }
 
 }
