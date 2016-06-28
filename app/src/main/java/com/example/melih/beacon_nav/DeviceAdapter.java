@@ -59,7 +59,7 @@ public class DeviceAdapter extends ArrayAdapter {
         rssi.setText("rssi    : " + rss + "");
         tx.setText( "tx power: " + txp);
         dist.setText("distance: " + MainActivity.calculateAccuracy(txp, rss));
-        avgdist.setText("average : " + MainActivity.getAvg());
+        avgdist.setText("average : ");
 
         return convertView;
     }

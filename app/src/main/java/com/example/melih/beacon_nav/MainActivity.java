@@ -37,8 +37,6 @@ public class MainActivity extends AppCompatActivity {
     private ListView listView;
     private List<ScanResult> resultLE;
     private ArrayList<String> deviceFilter;
-    private Queue<Double> lastReads;
-    private static double avg = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +44,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         scanBtn = (Button) findViewById(R.id.scanBtn);
         listView = (ListView) findViewById(R.id.list);
-        lastReads = new LinkedList<Double>();
         BTAdapter = getDefaultAdapter();
         BTLE = BTAdapter.getBluetoothLeScanner();
         deviceFilter = new ArrayList<>();
@@ -80,19 +77,11 @@ public class MainActivity extends AppCompatActivity {
                         adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
                         listView.setAdapter(adapter);
 
-                        if (lastReads.size() < 20) {
-                            lastReads.add((double) result.getRssi());
-                        } else {
-                            lastReads.poll();
-                            lastReads.add((double) result.getRssi());
-                        }
-                        avg = averageEstimator(lastReads);
-
                         Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi() );
                     }
                 };
                 ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
-                ArrayList<ScanFilter> filters = new ArrayList<>();
+                List<ScanFilter> filters = new ArrayList<>();
                 BTLE.startScan(filters, settings, scanCallback);
                 scanCallback.onBatchScanResults(resultLE);
 
@@ -121,19 +110,6 @@ public class MainActivity extends AppCompatActivity {
             double accuracy =  (0.89976)*Math.pow(ratio,7.7095) + 0.111;
             return accuracy;
         }
-    }
-
-    protected static double averageEstimator(Queue<Double> list){
-        double mean = 0;
-        for (double a : list) {
-            mean = mean + a;
-        }
-        mean = mean / list.size();
-        return mean;
-    }
-
-    public static double getAvg() {
-        return avg;
     }
 
 }
