@@ -37,6 +37,8 @@ public class MainActivity extends AppCompatActivity {
     private ListView listView;
     private List<ScanResult> resultLE;
     private static Map<String, Queue<Integer>> positionCache;
+    private static Map<Tuple<Double, Double>, Double> estimationMap;
+    private static Map<String, Tuple<Double, Double>> positionMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,9 +57,17 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 positionCache = new HashMap<String, Queue<Integer>>();
+                positionMap = new HashMap<String, Tuple<Double, Double>>();
+                estimationMap = new HashMap<Tuple<Double, Double>, Double>();
+
                 positionCache.put("D0:30:AD:84:07:40", new LinkedList<Integer>());  //orta
+                positionMap.put("D0:30:AD:84:07:40", new Tuple<Double, Double>(0.0, 0.0));
+
                 positionCache.put("E0:2E:E2:ED:86:64", new LinkedList<Integer>());  //sağ
+                positionMap.put("E0:2E:E2:ED:86:64", new Tuple<Double, Double>(8.0, 0.0));
+
                 positionCache.put("FC:73:08:31:50:42", new LinkedList<Integer>());  //üst
+                positionMap.put("FC:73:08:31:50:42", new Tuple<Double, Double>(0.0, 10.0));
 
                 if(BTAdapter.isDiscovering())
                     BTAdapter.cancelDiscovery();
@@ -68,6 +78,14 @@ public class MainActivity extends AppCompatActivity {
                     public void onScanResult(int callbackType, ScanResult result) {
 
                         String address = result.getDevice().getAddress();
+                        byte[] b = result.getScanRecord().getBytes();
+                        int txp = 0;
+                        try{
+                            String temp = String.format("%02x ", b[29]);
+                            txp = -(256 - Integer.parseInt(temp.substring(0,temp.length()-1),16));
+                        }catch (NullPointerException e){
+                            Log.d(result.getDevice().getAddress(), e.toString());
+                        }
 
                         if (positionCache.containsKey(address)) {
                             Queue<Integer> q = positionCache.get(address);
@@ -78,6 +96,11 @@ public class MainActivity extends AppCompatActivity {
                                 q.poll();
                                 q.add(result.getRssi());
                             }
+
+                            Tuple<Double, Double> pos= positionMap.get(address);
+                            estimationMap.put(pos, squareEstimate(address, txp));
+                            Tuple<Double, Double> position = getPosition(estimationMap);
+
                         }
 
                         ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
@@ -120,6 +143,29 @@ public class MainActivity extends AppCompatActivity {
             double accuracy =  (0.89976)*Math.pow(ratio,7.7095) + 0.111;
             return accuracy;
         }
+    }
+
+    protected static double squareEstimate(String s, int txPower){
+
+        if( !positionCache.containsKey(s) ) return 0;
+        Queue<Integer> q = positionCache.get(s);
+
+        double mean = calculateAccuracy(txPower, getAverage(s));
+        double sample_var = 0;
+
+        for (int a : q) {
+            sample_var = sample_var + Math.pow(mean-a,2);
+        }
+        sample_var = sample_var / (q.size() - 1);
+
+        double estimator = (Math.pow(mean,4)) / (Math.pow(mean,2) + sample_var);
+        return estimator;
+
+    }
+
+    protected static Tuple<Double, Double> getPosition(Map<Tuple<Double, Double>, Double> m){
+        Tuple<Double, Double> meh = new Tuple<Double, Double>(2.3, 4.5);
+        return meh;
     }
 
     public static double getAverage(String s) {
