@@ -15,6 +15,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private DeviceAdapter adapter;
     private Button scanBtn;
     private ListView listView;
+    private TextView posView;
     private List<ScanResult> resultLE;
     private static Map<String, Queue<Integer>> positionCache;
     private static Map<Tuple<Double, Double>, Double> estimationMap;
@@ -46,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         scanBtn = (Button) findViewById(R.id.scanBtn);
         listView = (ListView) findViewById(R.id.list);
+        posView = (TextView) findViewById(R.id.pos);
         BTAdapter = getDefaultAdapter();
         BTLE = BTAdapter.getBluetoothLeScanner();
 
@@ -98,8 +103,10 @@ public class MainActivity extends AppCompatActivity {
                             }
 
                             Tuple<Double, Double> pos= positionMap.get(address);
-                            estimationMap.put(pos, squareEstimate(address, txp));
+                            estimationMap.put(pos, calculateAccuracy(txp, getAverage(address)));
+                            //estimationMap.put(pos, squareEstimate(address, txp));
                             Tuple<Double, Double> position = getPosition(estimationMap);
+                            posView.setText("x: " + position.x + ", y: " + position.y);
 
                         }
 
@@ -164,8 +171,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     protected static Tuple<Double, Double> getPosition(Map<Tuple<Double, Double>, Double> m){
-        Tuple<Double, Double> meh = new Tuple<Double, Double>(2.3, 4.5);
-        return meh;
+
+        Tuple<Double, Double> z_0 = new Tuple<Double, Double>(8.0/3, 10.0/3);
+        return z_0;
+        /*Tuple<Double, Double> z_0 = new Tuple<Double, Double>(8.0/3, 10.0/3);
+        double partial_a, partial_b, f_x;
+        double partial_a_new = partial_x(m, z_0);
+        double partial_b_new = partial_y(m, z_0);
+        double lambda = 0.001;
+
+        do {
+            partial_a = partial_a_new;
+            partial_b = partial_b_new;
+            f_x = fx(m, z_0);
+            z_0.x = z_0.x - f_x * partial_a / (Math.pow(partial_a,2) + Math.pow(partial_b,2));
+            z_0.y = z_0.y - f_x * partial_b / (Math.pow(partial_a,2) + Math.pow(partial_b,2));
+            partial_a_new = partial_x(m, z_0);
+            partial_b_new = partial_y(m, z_0);
+        } while ( partial_a * partial_a_new > 0 && partial_b * partial_b_new > 0 );
+
+        do {
+            z_0.x = z_0.x - lambda * partial_x(m, z_0);
+            z_0.y = z_0.y - lambda * partial_y(m, z_0);
+        } while ( partial_a * partial_a_new > 0 && partial_b * partial_b_new > 0 );
+
+        return z_0;*/
     }
 
     public static double getAverage(String s) {
@@ -182,4 +212,36 @@ public class MainActivity extends AppCompatActivity {
         return mean;
     }
 
+    protected static double partial_x(Map<Tuple<Double, Double>, Double> m, Tuple<Double, Double> loc){
+
+        double result = 0;
+
+        for(Tuple<Double, Double> axis : m.keySet()) {
+            result = result + (loc.x - axis.x) * (Math.pow(loc.x-axis.x,2) + Math.pow(loc.y-axis.y,2) - m.get(axis));
+        }
+        return 4 * result;
+
+    }
+
+    protected static double partial_y(Map<Tuple<Double, Double>, Double> m, Tuple<Double, Double> loc){
+
+        double result = 0;
+
+        for(Tuple<Double, Double> axis : m.keySet()) {
+            result = result + (loc.y - axis.y) * (Math.pow(loc.x-axis.x,2) + Math.pow(loc.y-axis.y,2) - m.get(axis));
+        }
+        return 4 * result;
+
+    }
+
+    protected static double fx(Map<Tuple<Double, Double>, Double> m, Tuple<Double, Double> loc) {
+
+        double result = 0;
+
+        for(Tuple<Double, Double> axis : m.keySet()) {
+            result = result + Math.pow((Math.pow(loc.x-axis.x,2) + Math.pow(loc.y-axis.y,2) - m.get(axis)),2);
+        }
+
+        return result;
+    }
 }
