@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
         BTLE = BTAdapter.getBluetoothLeScanner();
         deviceFilter = new ArrayList<>();
         // addresses to filter
+        // test comment
         deviceFilter.add("D0:30:AD:84:07:40");
         deviceFilter.add("E0:2E:E2:ED:86:64");
         deviceFilter.add("D0:8B:08:63:C4:61");
