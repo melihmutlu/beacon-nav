@@ -40,9 +40,9 @@ public class MainActivity extends AppCompatActivity {
     private ListView listView;
     private TextView posView;
     private List<ScanResult> resultLE;
-    private static Map<String, Queue<Integer>> positionCache;
-    private static Map<Tuple<Double, Double>, Double> estimationMap;
-    private static Map<String, Tuple<Double, Double>> positionMap;
+    private static Map<String, Queue<Integer>> positionCache;                       // last n measurements of a beacon
+    private static Map<Tuple<Double, Double>, Double> estimationMap;                // distance estimation from a beacon with respect to getAverage() estimator
+    private static Map<String, Tuple<Double, Double>> positionMap;                  // position of a beacon
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,7 +104,6 @@ public class MainActivity extends AppCompatActivity {
 
                             Tuple<Double, Double> pos= positionMap.get(address);
                             estimationMap.put(pos, calculateAccuracy(txp, getAverage(address)));
-                            //estimationMap.put(pos, squareEstimate(address, txp));
                             Tuple<Double, Double> position = getPosition(estimationMap);
                             posView.setText("x: " + position.x + ", y: " + position.y);
 
@@ -152,51 +151,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    protected static double squareEstimate(String s, int txPower){
-
-        if( !positionCache.containsKey(s) ) return 0;
-        Queue<Integer> q = positionCache.get(s);
-
-        double mean = calculateAccuracy(txPower, getAverage(s));
-        double sample_var = 0;
-
-        for (int a : q) {
-            sample_var = sample_var + Math.pow(mean-a,2);
-        }
-        sample_var = sample_var / (q.size() - 1);
-
-        double estimator = (Math.pow(mean,4)) / (Math.pow(mean,2) + sample_var);
-        return estimator;
-
-    }
-
     protected static Tuple<Double, Double> getPosition(Map<Tuple<Double, Double>, Double> m){
 
         Tuple<Double, Double> z_0 = new Tuple<Double, Double>(8.0/3, 10.0/3);
         return z_0;
-        /*Tuple<Double, Double> z_0 = new Tuple<Double, Double>(8.0/3, 10.0/3);
-        double partial_a, partial_b, f_x;
-        double partial_a_new = partial_x(m, z_0);
-        double partial_b_new = partial_y(m, z_0);
-        double lambda = 0.001;
-
-        do {
-            partial_a = partial_a_new;
-            partial_b = partial_b_new;
-            f_x = fx(m, z_0);
-            z_0.x = z_0.x - f_x * partial_a / (Math.pow(partial_a,2) + Math.pow(partial_b,2));
-            z_0.y = z_0.y - f_x * partial_b / (Math.pow(partial_a,2) + Math.pow(partial_b,2));
-            partial_a_new = partial_x(m, z_0);
-            partial_b_new = partial_y(m, z_0);
-        } while ( partial_a * partial_a_new > 0 && partial_b * partial_b_new > 0 );
-
-        do {
-            z_0.x = z_0.x - lambda * partial_x(m, z_0);
-            z_0.y = z_0.y - lambda * partial_y(m, z_0);
-        } while ( partial_a * partial_a_new > 0 && partial_b * partial_b_new > 0 );
-
-        return z_0;*/
     }
+
+    // n-point running average estimator
 
     public static double getAverage(String s) {
 
@@ -211,7 +172,9 @@ public class MainActivity extends AppCompatActivity {
         mean = mean / cache.size();
         return mean;
     }
+}
 
+/*
     protected static double partial_x(Map<Tuple<Double, Double>, Double> m, Tuple<Double, Double> loc){
 
         double result = 0;
@@ -244,4 +207,54 @@ public class MainActivity extends AppCompatActivity {
 
         return result;
     }
-}
+*/
+
+
+/*
+## Steepest descent method
+
+        Tuple<Double, Double> z_0 = new Tuple<Double, Double>(8.0/3, 10.0/3);
+        double partial_a, partial_b, f_x;
+        double partial_a_new = partial_x(m, z_0);
+        double partial_b_new = partial_y(m, z_0);
+        double lambda = 0.001;
+
+        do {
+            partial_a = partial_a_new;
+            partial_b = partial_b_new;
+            f_x = fx(m, z_0);
+            z_0.x = z_0.x - f_x * partial_a / (Math.pow(partial_a,2) + Math.pow(partial_b,2));
+            z_0.y = z_0.y - f_x * partial_b / (Math.pow(partial_a,2) + Math.pow(partial_b,2));
+            partial_a_new = partial_x(m, z_0);
+            partial_b_new = partial_y(m, z_0);
+        } while ( partial_a * partial_a_new > 0 && partial_b * partial_b_new > 0 );
+
+        do {
+            z_0.x = z_0.x - lambda * partial_x(m, z_0);
+            z_0.y = z_0.y - lambda * partial_y(m, z_0);
+        } while ( partial_a * partial_a_new > 0 && partial_b * partial_b_new > 0 );
+
+        return z_0;
+
+*/
+
+/*
+
+    protected static double squareEstimate(String s, int txPower){
+
+        if( !positionCache.containsKey(s) ) return 0;
+        Queue<Integer> q = positionCache.get(s);
+
+        double mean = calculateAccuracy(txPower, getAverage(s));
+        double sample_var = 0;
+
+        for (int a : q) {
+            sample_var = sample_var + Math.pow(mean-a,2);
+        }
+        sample_var = sample_var / (q.size() - 1);
+
+        double estimator = (Math.pow(mean,4)) / (Math.pow(mean,2) + sample_var);
+        return estimator;
+
+    }
+*/
