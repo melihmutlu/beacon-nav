@@ -78,15 +78,16 @@ public class MainActivity extends AppCompatActivity {
                 ScanCallback scanCallback = new ScanCallback() {
                     @Override
                     public void onScanResult(int callbackType, ScanResult result) {
+                        Intent intent = new Intent(MainActivity.this, DeviceDetail.class);
                         listItems.put(result.getDevice().getAddress(), result);
                         list.addAll(listItems.entrySet());
                         if(log && result.getDevice().getAddress().equals(logAddress) && (rssiValues.size() < 10)){
                             rssiValues.add(result.getRssi());
+                            intent.putExtra("tx" , result.getScanRecord().getBytes());
                             Log.d("LOGGING" , rssiValues.toString());
                         }else if(rssiValues.size() >= 10){
                             log = false;
                             logAddress = "";
-                            Intent intent = new Intent(MainActivity.this, DeviceDetail.class);
                             intent.putIntegerArrayListExtra("rssi", rssiValues);
                             startActivity(intent);
                         }
