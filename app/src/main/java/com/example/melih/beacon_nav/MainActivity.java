@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
         BTAdapter = getDefaultAdapter();
         BTLE = BTAdapter.getBluetoothLeScanner();
 
-        if(!BTAdapter.isEnabled()) // enable bluetooth
+        if(!BTAdapter.isEnabled()) //enable bluetooth
             BTAdapter.enable();
 
         scanBtn.setOnClickListener(new View.OnClickListener() {
