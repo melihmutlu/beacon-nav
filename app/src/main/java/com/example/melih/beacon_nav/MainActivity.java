@@ -41,8 +41,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView posView;
     private List<ScanResult> resultLE;
     private static Map<String, Queue<Integer>> positionCache;                       // last n measurements of a beacon
-    private static Map<Tuple<Double, Double>, Double> estimationMap;                // distance estimation from a beacon with respect to getAverage() estimator
-    private static Map<String, Tuple<Double, Double>> positionMap;                  // position of a beacon
+    private static Map<Tuple, Double> estimationMap;                // distance estimation from a beacon with respect to getAverage() estimator
+    private static Map<String, Tuple> positionMap;                  // position of a beacon
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,18 +61,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                positionCache = new HashMap<String, Queue<Integer>>();
-                positionMap = new HashMap<String, Tuple<Double, Double>>();
-                estimationMap = new HashMap<Tuple<Double, Double>, Double>();
+                positionCache = new HashMap<>();
+                positionMap = new HashMap<>();
+                estimationMap = new HashMap<>();
 
                 positionCache.put("D0:30:AD:84:07:40", new LinkedList<Integer>());  //orta
-                positionMap.put("D0:30:AD:84:07:40", new Tuple<Double, Double>(0.0, 0.0));
+                positionMap.put("D0:30:AD:84:07:40", new Tuple(0.0, 0.0, 3.0));
 
                 positionCache.put("E0:2E:E2:ED:86:64", new LinkedList<Integer>());  //sağ
-                positionMap.put("E0:2E:E2:ED:86:64", new Tuple<Double, Double>(9.0, 0.0));
+                positionMap.put("E0:2E:E2:ED:86:64", new Tuple(9.0, 0.0, 3.0));
 
                 positionCache.put("FC:73:08:31:50:42", new LinkedList<Integer>());  //üst
-                positionMap.put("FC:73:08:31:50:42", new Tuple<Double, Double>(0.0, 13.6));
+                positionMap.put("FC:73:08:31:50:42", new Tuple(0.0, 13.6, 3.0));
 
                 if(BTAdapter.isDiscovering())
                     BTAdapter.cancelDiscovery();
@@ -102,10 +102,10 @@ public class MainActivity extends AppCompatActivity {
                                 q.add(result.getRssi());
                             }
 
-                            Tuple<Double, Double> pos= positionMap.get(address);
+                            Tuple pos= positionMap.get(address);
                             estimationMap.put(pos, calculateAccuracy(txp, getAverage(address)));
-                            Tuple<Double, Double> position = getPosition(estimationMap);
-                            posView.setText("x: " + position.x + ", y: " + position.y);
+                            Tuple position = getPosition(estimationMap);
+                            posView.setText("x: " + position.x + ", y: " + position.y + ", z: " + position.z);
 
                             /////
                             ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
@@ -152,11 +152,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    protected static Tuple<Double, Double> getPosition(Map<Tuple<Double, Double>, Double> m){
+    protected static Tuple getPosition(Map<Tuple, Double> m){
 
         double Z = 0;
         double posX = 0;
         double posY = 0;
+        double posZ = 0;
 
         // normalising factor
         for ( double e: m.values()) {
@@ -164,13 +165,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // accumulate weighted beacon positions
-        for ( Tuple<Double, Double> t : m.keySet()) {
+        for ( Tuple t : m.keySet()) {
             double temp = (1 / m.get(t)) / Z;
             posX = posX + temp * t.x;
             posY = posY + temp * t.y;
+            posZ = posZ + temp * t.z;
         }
 
-        return new Tuple<Double, Double>(posX, posY);
+        return new Tuple(posX, posY, posZ);
 
     }
 
