@@ -13,6 +13,14 @@
         />
 
     <TextView
+        android:id="@+id/address"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="15dp"
+        android:paddingBottom="3dp"
+        />
+
+    <TextView
         android:id="@+id/rssi"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -35,5 +43,8 @@
         android:textSize="15dp"
         android:paddingBottom="3dp"
         />
+
+
+
 
 </LinearLayout>

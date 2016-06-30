@@ -20,7 +20,7 @@ public class DeviceAdapter extends ArrayAdapter {
     public final String TAG = DeviceAdapter.class.getName();
     private  ArrayList<Map.Entry<String, ScanResult>>  mDevices;
     private Context context;
-    private TextView name , rssi ,tx, dist;
+    private TextView name , rssi ,tx, dist, address;
 
     public DeviceAdapter(Context context, int textViewResourceId,List<Map.Entry<String, ScanResult>> results) {
         super(context, textViewResourceId, results);
@@ -40,6 +40,7 @@ public class DeviceAdapter extends ArrayAdapter {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         convertView = inflater.inflate(R.layout.item_view , parent, false);
         name = (TextView) convertView.findViewById(R.id.name);
+        address = (TextView) convertView.findViewById(R.id.address);
         rssi = (TextView) convertView.findViewById(R.id.rssi);
         tx = (TextView) convertView.findViewById(R.id.tx);
         dist = (TextView) convertView.findViewById(R.id.distance);
@@ -58,6 +59,7 @@ public class DeviceAdapter extends ArrayAdapter {
         rssi.setText("rssi  :   " + rss + "");
         tx.setText( "tx power   :   -" + txp);
         dist.setText("distance : " + MainActivity.calculateDistance(txp, rss));
+        address.setText("address : " + mDevices.get(position).getValue().getDevice().getAddress());
 
         return convertView;
     }
