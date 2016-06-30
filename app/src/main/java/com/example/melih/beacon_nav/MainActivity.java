@@ -175,6 +175,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // n-point running average estimator
+    //
 
     public static double getAverage(String s) {
 
