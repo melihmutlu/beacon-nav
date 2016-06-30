@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
                             }
 
                             Tuple pos= positionMap.get(address);
-                            estimationMap.put(pos, calculateAccuracy(txp, getAverage(address)));
+                            estimationMap.put(pos, calculateDistance(txp, getAverage(address)));
                             Tuple position = getPosition(estimationMap);
                             posView.setText("x: " + position.x + ", y: " + position.y + ", z: " + position.z);
 
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    protected static double calculateAccuracy(int txPower, double rssi) {
+    protected static double calculateDistance(int txPower, double rssi) {
         if (rssi == 0) {
             return -1.0; // if we cannot determine accuracy, return -1.
         }
@@ -147,8 +147,8 @@ public class MainActivity extends AppCompatActivity {
             return Math.pow(ratio,10);
         }
         else {
-            double accuracy =  (0.89976)*Math.pow(ratio,7.7095) + 0.111;
-            return accuracy;
+            double distance =  (0.89976)*Math.pow(ratio,7.7095) + 0.111;
+            return distance;
         }
     }
 
