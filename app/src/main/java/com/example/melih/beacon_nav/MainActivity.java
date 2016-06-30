@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private ListView listView;
     private List<ScanResult> resultLE;
     private ArrayList<String> deviceFilter;
+    private  ArrayList<Map.Entry<String, ScanResult>>  list;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
         BTAdapter = getDefaultAdapter();
         BTLE = BTAdapter.getBluetoothLeScanner();
         deviceFilter = new ArrayList<>();
+        list = new ArrayList<Map.Entry<String, ScanResult>>();
         // addresses to filter
         deviceFilter.add("D0:30:AD:84:07:40");
         deviceFilter.add("E0:2E:E2:ED:86:64");
@@ -65,15 +67,15 @@ public class MainActivity extends AppCompatActivity {
                 filter.addAction(ACTION_DISCOVERY_FINISHED);
                 filter.addAction(ACTION_DISCOVERY_STARTED);
                 Log.d("INFO", "start ");
+                adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
+                listView.setAdapter(adapter);
 
                 ScanCallback scanCallback = new ScanCallback() {
                     @Override
                     public void onScanResult(int callbackType, ScanResult result) {
-                        listItems.put(result.getDevice().getAddress() , result);
-                        ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
+                        listItems.put(result.getDevice().getAddress(), result);
                         list.addAll(listItems.entrySet());
-                        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
-                        listView.setAdapter(adapter);
+                        adapter.notifyDataSetChanged();
                         Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi() );
                     }
                 };
@@ -94,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    protected static double calculateAccuracy(int txPower, double rssi) {
+    protected static double calculateDistance(int txPower, double rssi) {
         if (rssi == 0) {
             return -1.0; // if we cannot determine accuracy, return -1.
         }

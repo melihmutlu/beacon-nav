@@ -57,7 +57,7 @@ public class DeviceAdapter extends ArrayAdapter {
         name.setText(mDevices.get(position).getValue().getScanRecord().getDeviceName());
         rssi.setText("rssi  :   " + rss + "");
         tx.setText( "tx power   :   -" + txp);
-        dist.setText("distance : " + MainActivity.calculateAccuracy(txp, rss));
+        dist.setText("distance : " + MainActivity.calculateDistance(txp, rss));
 
         return convertView;
     }
