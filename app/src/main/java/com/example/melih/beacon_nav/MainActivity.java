@@ -69,10 +69,10 @@ public class MainActivity extends AppCompatActivity {
                 positionMap.put("D0:30:AD:84:07:40", new Tuple<Double, Double>(0.0, 0.0));
 
                 positionCache.put("E0:2E:E2:ED:86:64", new LinkedList<Integer>());  //sağ
-                positionMap.put("E0:2E:E2:ED:86:64", new Tuple<Double, Double>(8.0, 0.0));
+                positionMap.put("E0:2E:E2:ED:86:64", new Tuple<Double, Double>(9.0, 0.0));
 
                 positionCache.put("FC:73:08:31:50:42", new LinkedList<Integer>());  //üst
-                positionMap.put("FC:73:08:31:50:42", new Tuple<Double, Double>(0.0, 10.0));
+                positionMap.put("FC:73:08:31:50:42", new Tuple<Double, Double>(0.0, 13.6));
 
                 if(BTAdapter.isDiscovering())
                     BTAdapter.cancelDiscovery();
@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
                         if (positionCache.containsKey(address)) {
                             Queue<Integer> q = positionCache.get(address);
                             if (q == null) q = new LinkedList<Integer>();
-                            if (q.size() < 20) {
+                            if (q.size() < 1) {
                                 q.add(result.getRssi());
                             } else {
                                 q.poll();
@@ -107,14 +107,15 @@ public class MainActivity extends AppCompatActivity {
                             Tuple<Double, Double> position = getPosition(estimationMap);
                             posView.setText("x: " + position.x + ", y: " + position.y);
 
+                            /////
+                            ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
+
+                            listItems.put(result.getDevice().getAddress() , result);
+                            list.addAll(listItems.entrySet());
+                            adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
+                            listView.setAdapter(adapter);
+
                         }
-
-                        ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
-
-                        listItems.put(result.getDevice().getAddress() , result);
-                        list.addAll(listItems.entrySet());
-                        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
-                        listView.setAdapter(adapter);
 
                         Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi() );
                     }
@@ -153,8 +154,24 @@ public class MainActivity extends AppCompatActivity {
 
     protected static Tuple<Double, Double> getPosition(Map<Tuple<Double, Double>, Double> m){
 
-        Tuple<Double, Double> z_0 = new Tuple<Double, Double>(8.0/3, 10.0/3);
-        return z_0;
+        double Z = 0;
+        double posX = 0;
+        double posY = 0;
+
+        // normalising factor
+        for ( double e: m.values()) {
+            Z = Z + 1 / e;
+        }
+
+        // accumulate weighted beacon positions
+        for ( Tuple<Double, Double> t : m.keySet()) {
+            double temp = (1 / m.get(t)) / Z;
+            posX = posX + temp * t.x;
+            posY = posY + temp * t.y;
+        }
+
+        return new Tuple<Double, Double>(posX, posY);
+
     }
 
     // n-point running average estimator
