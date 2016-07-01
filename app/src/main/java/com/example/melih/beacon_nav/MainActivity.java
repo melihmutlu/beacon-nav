@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean log = false;
     private String logAddress = "";
     private ProgressDialog progress;
+    private ScanCallback scanCallback;
 
 
     @Override
@@ -60,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
         deviceFilter = new ArrayList<>();
         list = new ArrayList<Map.Entry<String, ScanResult>>();
         rssiValues = new ArrayList<>();
+        progress = new ProgressDialog(this);
+        progress.setMessage("Wait...");
         // addresses to filter
         deviceFilter.add("D0:30:AD:84:07:40");
         deviceFilter.add("E0:2E:E2:ED:86:64");
@@ -92,14 +95,12 @@ public class MainActivity extends AppCompatActivity {
                 if(BTAdapter.isDiscovering())
                     BTAdapter.cancelDiscovery();
                 Log.d("INFO", "start ");
-                ScanCallback scanCallback = new ScanCallback() {
+                scanCallback = new ScanCallback() {
                     @Override
                     public void onScanResult(int callbackType, ScanResult result) {
                         Intent intent = new Intent(MainActivity.this, DeviceDetail.class);
                         listItems.put(result.getDevice().getAddress(), result);
                         list.addAll(listItems.entrySet());
-                        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
-                        listView.setAdapter(adapter);
 
                         String address = result.getDevice().getAddress();
                         byte[] b = result.getScanRecord().getBytes();
@@ -126,19 +127,16 @@ public class MainActivity extends AppCompatActivity {
                             Tuple position = getPosition(estimationMap);
                             posView.setText("x: " + position.x + ", y: " + position.y + ", z: " + position.z);
 
-                            /////
                             ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
 
                             listItems.put(result.getDevice().getAddress() , result);
                             list.addAll(listItems.entrySet());
-                            adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
-                            listView.setAdapter(adapter);
 
                             }
 
                         Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi() );
                         if(log && result.getDevice().getAddress().equals(logAddress) && (rssiValues.size() < 15)){
-                            progress = ProgressDialog.show(MainActivity.this, "", "Wait...", true);
+                            progress.show();
                             rssiValues.add(result.getRssi());
                             intent.putExtra("tx" , result.getScanRecord().getBytes());
                             Log.d("LOGGING" , rssiValues.toString());
@@ -149,8 +147,11 @@ public class MainActivity extends AppCompatActivity {
                             intent.putIntegerArrayListExtra("rssi", rssiValues);
                             startActivity(intent);
                         }
-                        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
-                        listView.setAdapter(adapter);
+
+                        if(!log){
+                            adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
+                            listView.setAdapter(adapter);
+                        }
                         Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi());
                     }
                 };
@@ -172,12 +173,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    /** Called just before the activity is destroyed. */
     @Override
     public void onDestroy() {
         super.onDestroy();
         if(BTAdapter.isDiscovering())
             BTAdapter.cancelDiscovery();
+        BTLE.stopScan(scanCallback);
+        list.clear();
+        rssiValues.clear();
+        adapter.clear();
+        progress.dismiss();
     }
 
     @Override
@@ -185,7 +190,11 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
         if(BTAdapter.isDiscovering())
             BTAdapter.cancelDiscovery();
+        BTLE.stopScan(scanCallback);
+        list.clear();
         rssiValues.clear();
+        adapter.clear();
+        progress.dismiss();
     }
 
     protected static double calculateDistance(int txPower, double rssi) {

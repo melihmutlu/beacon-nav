@@ -56,7 +56,7 @@ public class DeviceAdapter extends ArrayAdapter {
         int txp = -(256 - Integer.parseInt(txValue.substring(0,txValue.length()-1),16));
         int rss = mDevices.get(position).getValue().getRssi();
 
-        name.setText(mDevices.get(position).getValue().getDevice().getAddress());
+        name.setText(mDevices.get(position).getValue().getDevice().getName());
         rssi.setText("rssi    : " + rss + "");
         tx.setText( "tx power: " + txp);
         dist.setText("distance: " + MainActivity.calculateDistance(txp, rss));
