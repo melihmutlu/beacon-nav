@@ -74,6 +74,9 @@ public class MainActivity extends AppCompatActivity {
                 positionCache.put("FC:73:08:31:50:42", new LinkedList<Integer>());  //üst
                 positionMap.put("FC:73:08:31:50:42", new Tuple(0.0, 13.6, 3.0));
 
+                positionCache.put("D0:8B:08:63:C4:61", new LinkedList<Integer>());  // arbitrary
+                positionMap.put("D0:8B:08:63:C4:61", new Tuple(0.0, 0.0, 0.0));
+
                 if(BTAdapter.isDiscovering())
                     BTAdapter.cancelDiscovery();
                 Log.d("INFO", "start ");
