@@ -125,8 +125,8 @@ public class MainActivity extends AppCompatActivity {
 
                             ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
 
-                            listItems.put(result.getDevice().getAddress() , result);
-                            list.addAll(listItems.entrySet());
+                            //listItems.put(result.getDevice().getAddress() , result);
+                            //list.addAll(listItems.entrySet());
 
                             }
 
@@ -137,8 +137,6 @@ public class MainActivity extends AppCompatActivity {
                             intent.putExtra("tx" , result.getScanRecord().getBytes());
                             Log.d("LOGGING" , rssiValues.toString());
                         }else if(rssiValues.size() >= 10){
-                            log = false;
-                            logAddress = "";
                             progress.dismiss();
                             intent.putIntegerArrayListExtra("rssi", rssiValues);
                             startActivity(intent);
@@ -176,6 +174,8 @@ public class MainActivity extends AppCompatActivity {
         if(BTAdapter.isDiscovering())
             BTAdapter.cancelDiscovery();
         BTLE.stopScan(scanCallback);
+        log = false;
+        logAddress = "";
         list.clear();
         listItems.clear();
         rssiValues.clear();
@@ -190,6 +190,8 @@ public class MainActivity extends AppCompatActivity {
         if(BTAdapter.isDiscovering())
             BTAdapter.cancelDiscovery();
         BTLE.stopScan(scanCallback);
+        log = false;
+        logAddress = "";
         list.clear();
         listItems.clear();
         rssiValues.clear();
