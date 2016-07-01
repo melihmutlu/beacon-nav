@@ -1,6 +1,7 @@
 package com.example.melih.beacon_nav;
 
 
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.BluetoothLeScanner;
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private  ArrayList<Map.Entry<String, ScanResult>>  list;
     private boolean log = false;
     private String logAddress = "";
+    private ProgressDialog progress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,13 +83,15 @@ public class MainActivity extends AppCompatActivity {
                         Intent intent = new Intent(MainActivity.this, DeviceDetail.class);
                         listItems.put(result.getDevice().getAddress(), result);
                         list.addAll(listItems.entrySet());
-                        if(log && result.getDevice().getAddress().equals(logAddress) && (rssiValues.size() < 10)){
+                        if(log && result.getDevice().getAddress().equals(logAddress) && (rssiValues.size() < 15)){
+                            progress = ProgressDialog.show(MainActivity.this, "", "Wait...", true);
                             rssiValues.add(result.getRssi());
                             intent.putExtra("tx" , result.getScanRecord().getBytes());
                             Log.d("LOGGING" , rssiValues.toString());
                         }else if(rssiValues.size() >= 10){
                             log = false;
                             logAddress = "";
+                            progress.dismiss();
                             intent.putIntegerArrayListExtra("rssi", rssiValues);
                             startActivity(intent);
                         }
