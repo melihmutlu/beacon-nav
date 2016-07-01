@@ -147,8 +147,9 @@ public class MainActivity extends AppCompatActivity {
                         if(!log){
                             adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
                             listView.setAdapter(adapter);
+                            Log.d("INFO", "adapter set");
                         }
-                        Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi());
+
                     }
                 };
                 ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
@@ -176,8 +177,10 @@ public class MainActivity extends AppCompatActivity {
             BTAdapter.cancelDiscovery();
         BTLE.stopScan(scanCallback);
         list.clear();
+        listItems.clear();
         rssiValues.clear();
-        adapter.clear();
+        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , null);
+        listView.setAdapter(adapter);
         progress.dismiss();
     }
 
@@ -188,9 +191,12 @@ public class MainActivity extends AppCompatActivity {
             BTAdapter.cancelDiscovery();
         BTLE.stopScan(scanCallback);
         list.clear();
+        listItems.clear();
         rssiValues.clear();
-        adapter.clear();
+        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , null);
+        listView.setAdapter(adapter);
         progress.dismiss();
+
     }
 
     protected static double calculateAccuracy(int txPower, double rssi) {

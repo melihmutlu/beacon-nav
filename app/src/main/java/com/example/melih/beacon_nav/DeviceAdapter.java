@@ -24,12 +24,15 @@ public class DeviceAdapter extends ArrayAdapter {
 
     public DeviceAdapter(Context context, int textViewResourceId,List<Map.Entry<String, ScanResult>> results) {
         super(context, textViewResourceId, results);
+        mDevices = new ArrayList<>();
         mDevices = (ArrayList<Map.Entry<String, ScanResult>>) results;
         this.context = context;
     }
 
     @Override
     public int getCount() {
+        if(mDevices == null)
+            return 0;
         return mDevices.size();
     }
 
