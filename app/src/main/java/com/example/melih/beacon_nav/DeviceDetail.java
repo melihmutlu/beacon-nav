@@ -46,7 +46,7 @@ public class DeviceDetail extends AppCompatActivity {
         for(int i: rssi){
             total += (i- mean)*(i- mean);
         }
-        return Math.sqrt(total/rssi.size());
+        return Math.sqrt(total/rssi.size() - 1);
     }
 
 }
