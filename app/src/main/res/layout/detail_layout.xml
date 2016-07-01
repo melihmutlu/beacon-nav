@@ -9,14 +9,16 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/values"
-        android:textSize="20dp"/>
+        android:textSize="20dp"
+        android:layout_margin="10dp"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/label1"
         android:text="Average"
         android:textSize="15dp"
-        android:layout_alignBottom="@id/values"
+        android:layout_below="@id/values"
+        android:layout_margin="10dp"
         android:layout_alignParentLeft="true"/>
 
     <TextView
@@ -26,23 +28,17 @@
         android:text="Std. Deviation    "
         android:textSize="15dp"
         android:layout_centerHorizontal="true"
-        android:layout_alignBottom="@+id/values" />
+        android:layout_margin="10dp"
+        android:layout_below="@id/values" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/label3"
-        android:text="Estimated Dist."
-        android:textSize="15dp"
-        android:layout_alignBottom="@id/values"
-        android:layout_alignParentRight="true"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/avg"
         android:textSize="15dp"
         android:layout_alignParentLeft="true"
-        android:layout_alignBottom="@id/label1"/>
+        android:layout_margin="10dp"
+        android:layout_below="@id/label1"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -50,14 +46,8 @@
         android:id="@+id/std_dev"
         android:textSize="15dp"
         android:layout_centerHorizontal="true"
-        android:layout_alignBottom="@id/label2"/>
+        android:layout_margin="10dp"
+        android:layout_below="@id/label1"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/est_dist"
-        android:textSize="15dp"
-        android:layout_alignParentRight="true"
-        android:layout_alignBottom="@id/label3"/>
 
 </RelativeLayout>
