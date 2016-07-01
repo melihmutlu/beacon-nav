@@ -20,7 +20,7 @@ public class DeviceAdapter extends ArrayAdapter {
     public final String TAG = DeviceAdapter.class.getName();
     private  ArrayList<Map.Entry<String, ScanResult>>  mDevices;
     private Context context;
-    private TextView name , rssi ,tx, dist;
+    private TextView name , rssi ,tx, dist, avgdist;
 
     public DeviceAdapter(Context context, int textViewResourceId,List<Map.Entry<String, ScanResult>> results) {
         super(context, textViewResourceId, results);
@@ -43,6 +43,7 @@ public class DeviceAdapter extends ArrayAdapter {
         rssi = (TextView) convertView.findViewById(R.id.rssi);
         tx = (TextView) convertView.findViewById(R.id.tx);
         dist = (TextView) convertView.findViewById(R.id.distance);
+        avgdist = (TextView) convertView.findViewById(R.id.avgdist);
 
         byte[] sr = mDevices.get(position).getValue().getScanRecord().getBytes();
         try{
@@ -54,10 +55,13 @@ public class DeviceAdapter extends ArrayAdapter {
         int txp = -(256 - Integer.parseInt(txValue.substring(0,txValue.length()-1),16));
         int rss = mDevices.get(position).getValue().getRssi();
 
-        name.setText(mDevices.get(position).getValue().getScanRecord().getDeviceName());
-        rssi.setText("rssi  :   " + rss + "");
-        tx.setText( "tx power   :   -" + txp);
-        dist.setText("distance : " + MainActivity.calculateDistance(txp, rss));
+
+        name.setText(mDevices.get(position).getValue().getDevice().getAddress());
+        rssi.setText("rssi    : " + rss + "");
+        tx.setText( "tx power: " + txp);
+        dist.setText("distance: " + MainActivity.calculateAccuracy(txp, rss));
+        avgdist.setText("average : " + MainActivity.calculateAccuracy(txp, MainActivity.getAverage(mDevices.get(position).getValue().getDevice().getAddress())));
+
 
         return convertView;
     }
