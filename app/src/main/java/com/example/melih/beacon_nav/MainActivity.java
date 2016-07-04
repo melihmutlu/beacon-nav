@@ -162,8 +162,25 @@ public class MainActivity extends AppCompatActivity {
         listItems.clear();
         rssiValues.clear();
         adapter = new DeviceAdapter(MainActivity.this, R.layout.item_view, list);
-        ((ArrayAdapter) listView.getAdapter()).notifyDataSetChanged();
+        listView.setAdapter(adapter);
         progress.dismiss();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(BTAdapter.isDiscovering())
+            BTAdapter.cancelDiscovery();
+        BTLE.stopScan(scanCallback);
+        log = false;
+        logAddress = "";
+        list.clear();
+        listItems.clear();
+        rssiValues.clear();
+        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
+        listView.setAdapter(adapter);
+        progress.dismiss();
+
     }
 
     protected static double calculateDistance(int txPower, double rssi) {
