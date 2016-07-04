@@ -51,18 +51,6 @@ public class DeviceDetail extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        finish();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        finish();
-    }
-
-    @Override
     public void onBackPressed() {
         super.onBackPressed();
         Log.d("INFO" , "back pressed");
