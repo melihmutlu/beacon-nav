@@ -128,11 +128,7 @@ public class MainActivity extends AppCompatActivity {
                             posView.setText("x: " + position.x + ", y: " + position.y + ", z: " + position.z);
 
                             ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
-
-                            listItems.put(result.getDevice().getAddress() , result);
-                            list.addAll(listItems.entrySet());
-
-                            }
+                        }
 
                         Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi() );
                         if(log && result.getDevice().getAddress().equals(logAddress) && (rssiValues.size() < 15)){
