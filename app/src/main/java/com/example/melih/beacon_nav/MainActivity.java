@@ -14,6 +14,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -39,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private List<ScanResult> resultLE;
     private ArrayList<String> deviceFilter;
     private ArrayList<Integer> rssiValues = new ArrayList<>();
-    private  ArrayList<Map.Entry<String, ScanResult>>  list;
+    private  ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<>();
     private static Map<String, Queue<Integer>> positionCache;                       // last n measurements of a beacon
     private static Map<Tuple, Double> estimationMap;                // distance estimation from a beacon with respect to getAverage() estimator
     private static Map<String, Tuple> positionMap;                  // position of a beacon
@@ -72,6 +73,9 @@ public class MainActivity extends AppCompatActivity {
         if(!BTAdapter.isEnabled()) //enable bluetooth
             BTAdapter.enable();
 
+        adapter = new DeviceAdapter(this , R.layout.item_view , list);
+        listView.setAdapter(adapter);
+
         scanBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -99,8 +103,11 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onScanResult(int callbackType, ScanResult result) {
                         Intent intent = new Intent(MainActivity.this, DeviceDetail.class);
+                        Log.d("INFO" , result.getDevice().getAddress());
                         listItems.put(result.getDevice().getAddress(), result);
+                        list.clear();
                         list.addAll(listItems.entrySet());
+                        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
 
                         String address = result.getDevice().getAddress();
                         byte[] b = result.getScanRecord().getBytes();
@@ -135,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
                             }
 
                         Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi() );
-                        if(log && result.getDevice().getAddress().equals(logAddress) && (rssiValues.size() < 15)){
+                        if(log && result.getDevice().getAddress().equals(logAddress) && (rssiValues.size() < 10)){
                             progress.show();
                             rssiValues.add(result.getRssi());
                             intent.putExtra("tx" , result.getScanRecord().getBytes());
@@ -147,8 +154,7 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         if(!log){
-                            adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
-                            listView.setAdapter(adapter);
+                            ((ArrayAdapter) listView.getAdapter()).notifyDataSetChanged();
                             Log.d("INFO", "adapter set");
                         }
 
@@ -183,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
         list.clear();
         listItems.clear();
         rssiValues.clear();
-        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , null);
+        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
         listView.setAdapter(adapter);
         progress.dismiss();
     }
@@ -199,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
         list.clear();
         listItems.clear();
         rssiValues.clear();
-        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , null);
+        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
         listView.setAdapter(adapter);
         progress.dismiss();
 
