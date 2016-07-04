@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private List<ScanResult> resultLE;
     private ArrayList<String> deviceFilter;
     private ArrayList<Integer> rssiValues = new ArrayList<>();
-    private  ArrayList<Map.Entry<String, ScanResult>>  list;
+    private  ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<>();
     private boolean log = false;
     private String logAddress = "";
     private ProgressDialog progress;
@@ -64,6 +64,9 @@ public class MainActivity extends AppCompatActivity {
 
         if(!BTAdapter.isEnabled()) //enable bluetooth
             BTAdapter.enable();
+
+        adapter = new DeviceAdapter(this , R.layout.item_view, list);
+        listView.setAdapter(adapter);
 
         scanBtn.setOnClickListener(new View.OnClickListener() {
             @Override
