@@ -1,5 +1,6 @@
 package com.example.melih.beacon_nav;
 
+import org.apache.commons.math3.distribution.NormalDistribution;
 
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -25,6 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Random;
 
 import static android.bluetooth.BluetoothAdapter.getDefaultAdapter;
 
@@ -40,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private List<ScanResult> resultLE;
     private ArrayList<String> deviceFilter;
     private ArrayList<Integer> rssiValues = new ArrayList<>();
-    private  ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<>();
+    private ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<>();
     private static Map<String, Queue<Integer>> positionCache;                       // last n measurements of a beacon
     private static Map<Tuple, Double> estimationMap;                // distance estimation from a beacon with respect to getAverage() estimator
     private static Map<String, Tuple> positionMap;                  // position of a beacon
@@ -48,7 +50,9 @@ public class MainActivity extends AppCompatActivity {
     private String logAddress = "";
     private ProgressDialog progress;
     private ScanCallback scanCallback;
-
+    private static Tuple point;
+    private static NormalDistribution Z;
+    int i=0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +74,10 @@ public class MainActivity extends AppCompatActivity {
         deviceFilter.add("D0:8B:08:63:C4:61");
         deviceFilter.add("FC:73:08:31:50:42");
         deviceFilter.add("D4:22:FF:09:00:E9");
+
+        point = new Tuple(3.0, 4.5, 3.0);
+        Z = new NormalDistribution(0, 1);
+
         if(!BTAdapter.isEnabled()) //enable bluetooth
             BTAdapter.enable();
 
@@ -102,6 +110,8 @@ public class MainActivity extends AppCompatActivity {
                 scanCallback = new ScanCallback() {
                     @Override
                     public void onScanResult(int callbackType, ScanResult result) {
+                        i++;
+                        posView.setText("it: " + i);
                         Intent intent = new Intent(MainActivity.this, DeviceDetail.class);
                         Log.d("INFO" , result.getDevice().getAddress());
                         listItems.put(result.getDevice().getAddress(), result);
@@ -120,6 +130,9 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         if (positionCache.containsKey(address)) {
+
+                            /*/
+
                             Queue<Integer> q = positionCache.get(address);
                             if (q == null) q = new LinkedList<Integer>();
                             if (q.size() < 1) {
@@ -129,17 +142,17 @@ public class MainActivity extends AppCompatActivity {
                                 q.add(result.getRssi());
                             }
 
+                            //*/
+
                             Tuple pos= positionMap.get(address);
-                            estimationMap.put(pos, calculateDistance(txp, getAverage(address)));
-                            Tuple position = getPosition(estimationMap);
-                            posView.setText("x: " + position.x + ", y: " + position.y + ", z: " + position.z);
-
-                            ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
-
-                            //listItems.put(result.getDevice().getAddress() , result);
-                            //list.addAll(listItems.entrySet());
-
+                            //estimationMap.put(pos, calculateDistance(txp, getAverage(address)));
+                            estimationMap.put(pos, calculateDistance(txp, result.getRssi()));
+                            for(int j=0; j<999; j++) {
+                                i++;
+                                getPosition(estimationMap);
+                                posView.setText("x: " + point.x + ", y: " + point.y + ", z: " + point.z + "it: " + i);
                             }
+                        }
 
                         Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi() );
                         if(log && result.getDevice().getAddress().equals(logAddress) && (rssiValues.size() < 10)){
@@ -163,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
                 ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
                 List<ScanFilter> filters = new ArrayList<>();
                 BTLE.startScan(filters, settings, scanCallback);
-                scanCallback.onBatchScanResults(resultLE);
+                //scanCallback.onBatchScanResults(resultLE);
 
             }});
 
@@ -194,6 +207,7 @@ public class MainActivity extends AppCompatActivity {
         progress.dismiss();
     }
 
+    /*
     @Override
     protected void onPause() {
         super.onPause();
@@ -210,8 +224,12 @@ public class MainActivity extends AppCompatActivity {
         progress.dismiss();
 
     }
+    */
 
     protected static double calculateDistance(int txPower, double rssi) {
+        double n = 2;
+        return Math.pow(10d, ((double) txPower - rssi) / (10 * n));
+        /*
         if (rssi == 0) {
             return -1.0; // if we cannot determine accuracy, return -1.
         }
@@ -224,15 +242,33 @@ public class MainActivity extends AppCompatActivity {
             double distance =  (0.89976)*Math.pow(ratio,7.7095) + 0.111;
             return distance;
         }
+        */
     }
 
-    protected static Tuple getPosition(Map<Tuple, Double> m){
+    protected static void getPosition(Map<Tuple, Double> m){
 
-        double Z = 0;
-        double posX = 0;
-        double posY = 0;
-        double posZ = 0;
+        double probability = 1;
 
+        Random r = new Random();
+        double x = point.x + r.nextGaussian();
+        double y = point.y + r.nextGaussian();
+        double z = point.z + r.nextGaussian();
+
+        for(Tuple t : m.keySet()){
+            double d_new = Math.sqrt( Math.pow(t.x - x,2) + Math.pow(t.y - y,2) + Math.pow(t.z - z,2));
+            double d = m.get(t);
+            probability = probability * Z.cumulativeProbability(d-d_new);
+        }
+
+        double a = r.nextDouble();
+
+        if ( a < probability) {
+            point.x = x;
+            point.y = y;
+            point.z = z;
+        }
+
+        /*
         // normalising factor
         for ( double e: m.values()) {
             Z = Z + 1 / e;
@@ -245,9 +281,7 @@ public class MainActivity extends AppCompatActivity {
             posY = posY + temp * t.y;
             posZ = posZ + temp * t.z;
         }
-
-        return new Tuple(posX, posY, posZ);
-
+        */
     }
 
     // n-point running average estimator
