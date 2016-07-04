@@ -20,10 +20,8 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 
 import static android.bluetooth.BluetoothAdapter.getDefaultAdapter;
 
@@ -40,9 +38,6 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> deviceFilter;
     private ArrayList<Integer> rssiValues = new ArrayList<>();
     private  ArrayList<Map.Entry<String, ScanResult>>  list;
-    private static Map<String, Queue<Integer>> positionCache;                       // last n measurements of a beacon
-    private static Map<Tuple, Double> estimationMap;                // distance estimation from a beacon with respect to getAverage() estimator
-    private static Map<String, Tuple> positionMap;                  // position of a beacon
     private boolean log = false;
     private String logAddress = "";
     private ProgressDialog progress;
@@ -53,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         scanBtn = (Button) findViewById(R.id.scanBtn);
         listView = (ListView) findViewById(R.id.list);
         posView = (TextView) findViewById(R.id.pos);
@@ -63,12 +59,8 @@ public class MainActivity extends AppCompatActivity {
         rssiValues = new ArrayList<>();
         progress = new ProgressDialog(this);
         progress.setMessage("Wait...");
-        // addresses to filter
-        deviceFilter.add("D0:30:AD:84:07:40");
-        deviceFilter.add("E0:2E:E2:ED:86:64");
-        deviceFilter.add("D0:8B:08:63:C4:61");
-        deviceFilter.add("FC:73:08:31:50:42");
-        deviceFilter.add("D4:22:FF:09:00:E9");
+        final WeightedAvgEstimator WAEst = new WeightedAvgEstimator();
+
         if(!BTAdapter.isEnabled()) //enable bluetooth
             BTAdapter.enable();
 
@@ -76,90 +68,74 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                positionCache = new HashMap<>();
-                positionMap = new HashMap<>();
-                estimationMap = new HashMap<>();
-
-                positionCache.put("D0:30:AD:84:07:40", new LinkedList<Integer>());  //orta
-                positionMap.put("D0:30:AD:84:07:40", new Tuple(0.0, 0.0, 3.0));
-
-                positionCache.put("E0:2E:E2:ED:86:64", new LinkedList<Integer>());  //sağ
-                positionMap.put("E0:2E:E2:ED:86:64", new Tuple(9.0, 0.0, 3.0));
-
-                positionCache.put("FC:73:08:31:50:42", new LinkedList<Integer>());  //üst
-                positionMap.put("FC:73:08:31:50:42", new Tuple(0.0, 13.6, 3.0));
-
-                positionCache.put("D0:8B:08:63:C4:61", new LinkedList<Integer>());  // arbitrary
-                positionMap.put("D0:8B:08:63:C4:61", new Tuple(0.0, 0.0, 0.0));
-
-                if(BTAdapter.isDiscovering())
+                if (BTAdapter.isDiscovering())
                     BTAdapter.cancelDiscovery();
+
                 Log.d("INFO", "start ");
+
                 scanCallback = new ScanCallback() {
                     @Override
                     public void onScanResult(int callbackType, ScanResult result) {
-                        Intent intent = new Intent(MainActivity.this, DeviceDetail.class);
-                        listItems.put(result.getDevice().getAddress(), result);
-                        list.addAll(listItems.entrySet());
 
+                        Intent intent = new Intent(MainActivity.this, DeviceDetail.class);
                         String address = result.getDevice().getAddress();
+
+                        // Getting calibration value
                         byte[] b = result.getScanRecord().getBytes();
                         int txp = 0;
-                        try{
+                        try {
                             String temp = String.format("%02x ", b[29]);
-                            txp = -(256 - Integer.parseInt(temp.substring(0,temp.length()-1),16));
-                        }catch (NullPointerException e){
+                            txp = -(256 - Integer.parseInt(temp.substring(0, temp.length() - 1), 16));
+                        } catch (NullPointerException e) {
                             Log.d(result.getDevice().getAddress(), e.toString());
                         }
 
-                        if (positionCache.containsKey(address)) {
-                            Queue<Integer> q = positionCache.get(address);
-                            if (q == null) q = new LinkedList<Integer>();
-                            if (q.size() < 1) {
-                                q.add(result.getRssi());
-                            } else {
-                                q.poll();
-                                q.add(result.getRssi());
-                            }
+                        if (WAEst.isContains(address)) {
+                            WAEst.run(address, result.getRssi());
 
-                            Tuple pos= positionMap.get(address);
-                            estimationMap.put(pos, calculateDistance(txp, getAverage(address)));
-                            Tuple position = getPosition(estimationMap);
+                            Tuple position = WAEst.getPosition(address, calculateDistance(txp, WAEst.getAverage(address)));
                             posView.setText("x: " + position.x + ", y: " + position.y + ", z: " + position.z);
 
-                            ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
-
-                            //listItems.put(result.getDevice().getAddress() , result);
+                            //ArrayList<Map.Entry<String, ScanResult>> list = new ArrayList<Map.Entry<String, ScanResult>>();
+                            //listItems.put(result.getDevice().getAddress(), result);
                             //list.addAll(listItems.entrySet());
 
-                            }
+                        }
 
-                        Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi() );
-                        if(log && result.getDevice().getAddress().equals(logAddress) && (rssiValues.size() < 15)){
+
+                        Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi());
+                        // Logging mode
+                        if (log && result.getDevice().getAddress().equals(logAddress) && (rssiValues.size() < 10)) {
                             progress.show();
                             rssiValues.add(result.getRssi());
-                            intent.putExtra("tx" , result.getScanRecord().getBytes());
-                            Log.d("LOGGING" , rssiValues.toString());
-                        }else if(rssiValues.size() >= 10){
+                            intent.putExtra("tx", result.getScanRecord().getBytes());
+                            Log.d("LOGGING", rssiValues.toString());
+                        } else if (rssiValues.size() >= 10) {
                             progress.dismiss();
                             intent.putIntegerArrayListExtra("rssi", rssiValues);
                             startActivity(intent);
                         }
 
-                        if(!log){
-                            adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , list);
+                        listItems.put(result.getDevice().getAddress(), result);
+                        list.addAll(listItems.entrySet());
+
+                        //Set Listview
+                        if (!log) {
+                            adapter = new DeviceAdapter(MainActivity.this, R.layout.item_view, list);
                             listView.setAdapter(adapter);
                             Log.d("INFO", "adapter set");
                         }
 
                     }
                 };
+                // BLE scan settings
                 ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
                 List<ScanFilter> filters = new ArrayList<>();
                 BTLE.startScan(filters, settings, scanCallback);
                 scanCallback.onBatchScanResults(resultLE);
 
-            }});
+            }
+        });
 
             listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
@@ -170,7 +146,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
     }
-
 
     @Override
     public void onDestroy() {
@@ -183,26 +158,7 @@ public class MainActivity extends AppCompatActivity {
         list.clear();
         listItems.clear();
         rssiValues.clear();
-        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , null);
-        listView.setAdapter(adapter);
         progress.dismiss();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if(BTAdapter.isDiscovering())
-            BTAdapter.cancelDiscovery();
-        BTLE.stopScan(scanCallback);
-        log = false;
-        logAddress = "";
-        list.clear();
-        listItems.clear();
-        rssiValues.clear();
-        adapter = new DeviceAdapter(MainActivity.this , R.layout.item_view , null);
-        listView.setAdapter(adapter);
-        progress.dismiss();
-
     }
 
     protected static double calculateDistance(int txPower, double rssi) {
@@ -219,48 +175,10 @@ public class MainActivity extends AppCompatActivity {
             return distance;
         }
     }
-
-    protected static Tuple getPosition(Map<Tuple, Double> m){
-
-        double Z = 0;
-        double posX = 0;
-        double posY = 0;
-        double posZ = 0;
-
-        // normalising factor
-        for ( double e: m.values()) {
-            Z = Z + 1 / e;
-        }
-
-        // accumulate weighted beacon positions
-        for ( Tuple t : m.keySet()) {
-            double temp = (1 / m.get(t)) / Z;
-            posX = posX + temp * t.x;
-            posY = posY + temp * t.y;
-            posZ = posZ + temp * t.z;
-        }
-
-        return new Tuple(posX, posY, posZ);
-
-    }
-
-    // n-point running average estimator
-    //
-
-    public static double getAverage(String s) {
-
-        if ( !positionCache.containsKey(s) ) return 0;
-
-        double mean = 0;
-        Queue<Integer> cache = positionCache.get(s);
-
-        for (int i : cache) {
-            mean = mean + i;
-        }
-        mean = mean / cache.size();
-        return mean;
-    }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
     protected static double partial_x(Map<Tuple<Double, Double>, Double> m, Tuple<Double, Double> loc){
