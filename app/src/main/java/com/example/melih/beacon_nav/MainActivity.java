@@ -100,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onScanResult(int callbackType, ScanResult result) {
                         Intent intent = new Intent(MainActivity.this, DeviceDetail.class);
                         listItems.put(result.getDevice().getAddress(), result);
+                        list.clear();
                         list.addAll(listItems.entrySet());
 
                         String address = result.getDevice().getAddress();
@@ -126,8 +127,6 @@ public class MainActivity extends AppCompatActivity {
                             estimationMap.put(pos, calculateDistance(txp, getAverage(address)));
                             Tuple position = getPosition(estimationMap);
                             posView.setText("x: " + position.x + ", y: " + position.y + ", z: " + position.z);
-
-                            ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<Map.Entry<String, ScanResult>>();
                         }
 
                         Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi() );
