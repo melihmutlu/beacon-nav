@@ -14,6 +14,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -117,12 +118,13 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         listItems.put(result.getDevice().getAddress(), result);
+                        list.clear();
                         list.addAll(listItems.entrySet());
+                        adapter = new DeviceAdapter(MainActivity.this, R.layout.item_view, list);
 
                         //Set Listview
                         if (!log) {
-                            adapter = new DeviceAdapter(MainActivity.this, R.layout.item_view, list);
-                            listView.setAdapter(adapter);
+                            ((ArrayAdapter) listView.getAdapter()).notifyDataSetChanged();
                             Log.d("INFO", "adapter set");
                         }
 
@@ -158,6 +160,8 @@ public class MainActivity extends AppCompatActivity {
         list.clear();
         listItems.clear();
         rssiValues.clear();
+        adapter = new DeviceAdapter(MainActivity.this, R.layout.item_view, list);
+        ((ArrayAdapter) listView.getAdapter()).notifyDataSetChanged();
         progress.dismiss();
     }
 

@@ -2,6 +2,7 @@ package com.example.melih.beacon_nav;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -49,4 +50,21 @@ public class DeviceDetail extends AppCompatActivity {
         return Math.sqrt(total/rssi.size() - 1);
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        finish();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Log.d("INFO" , "back pressed");
+    }
 }
