@@ -103,8 +103,6 @@ public class MainActivity extends AppCompatActivity {
 
                         }
 
-
-                        Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi());
                         // Logging mode
                         if (log && result.getDevice().getAddress().equals(logAddress) && (rssiValues.size() < 10)) {
                             progress.show();
