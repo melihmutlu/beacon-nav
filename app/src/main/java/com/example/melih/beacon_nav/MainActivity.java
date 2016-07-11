@@ -10,9 +10,12 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Intent;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -39,7 +42,6 @@ public class MainActivity extends AppCompatActivity {
     private Button scanBtn;
     private ListView listView;
     private TextView posView;
-    private List<ScanResult> resultLE;
     private ArrayList<String> deviceFilter;
     private ArrayList<Integer> rssiValues = new ArrayList<>();
     private ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<>();
@@ -52,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
     private ScanCallback scanCallback;
     private static Tuple point;
     private static NormalDistribution Z;
-    int i=0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,8 +111,7 @@ public class MainActivity extends AppCompatActivity {
                 scanCallback = new ScanCallback() {
                     @Override
                     public void onScanResult(int callbackType, ScanResult result) {
-                        i++;
-                        posView.setText("it: " + i);
+
                         Intent intent = new Intent(MainActivity.this, DeviceDetail.class);
                         Log.d("INFO" , result.getDevice().getAddress());
                         listItems.put(result.getDevice().getAddress(), result);
@@ -131,11 +131,11 @@ public class MainActivity extends AppCompatActivity {
 
                         if (positionCache.containsKey(address)) {
 
-                            /*/
+                            //*/
 
                             Queue<Integer> q = positionCache.get(address);
                             if (q == null) q = new LinkedList<Integer>();
-                            if (q.size() < 1) {
+                            if (q.size() < 10) {
                                 q.add(result.getRssi());
                             } else {
                                 q.poll();
@@ -145,13 +145,24 @@ public class MainActivity extends AppCompatActivity {
                             //*/
 
                             Tuple pos= positionMap.get(address);
-                            //estimationMap.put(pos, calculateDistance(txp, getAverage(address)));
-                            estimationMap.put(pos, calculateDistance(txp, result.getRssi()));
-                            for(int j=0; j<999; j++) {
-                                i++;
-                                getPosition(estimationMap);
-                                posView.setText("x: " + point.x + ", y: " + point.y + ", z: " + point.z + "it: " + i);
+                            estimationMap.put(pos, calculateDistance(txp, getAverage(address)));
+                            //estimationMap.put(pos, calculateDistance(txp, result.getRssi()));
+                            double a = -1;
+                            double avgX = 0;
+                            double avgY = 0;
+                            double avgZ = 0;
+
+                            for(int j=0; j<1000; j++) {
+                                a = getPosition(estimationMap);
+                                avgX = avgX + point.x;
+                                avgY = avgY + point.y;
+                                avgZ = avgZ + point.z;
                             }
+
+                            point.x = avgX / 1000;
+                            point.y = avgY / 1000;
+                            point.z = avgZ / 1000;
+                            posView.setText("x: " + point.x + ", y: " + point.y + ", z: " + point.z + ", pr: " + a);
                         }
 
                         Log.d("INFO", "device: " + result.getDevice() + ", rssi: " + result.getRssi() );
@@ -176,7 +187,6 @@ public class MainActivity extends AppCompatActivity {
                 ScanSettings settings = new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build();
                 List<ScanFilter> filters = new ArrayList<>();
                 BTLE.startScan(filters, settings, scanCallback);
-                //scanCallback.onBatchScanResults(resultLE);
 
             }});
 
@@ -245,28 +255,38 @@ public class MainActivity extends AppCompatActivity {
         */
     }
 
-    protected static void getPosition(Map<Tuple, Double> m){
+    protected static double getPosition(Map<Tuple, Double> m){
 
-        double probability = 1;
+        double pr_new = 1;
+        double pr_old = 1;
 
         Random r = new Random();
-        double x = point.x + r.nextGaussian();
-        double y = point.y + r.nextGaussian();
-        double z = point.z + r.nextGaussian();
+        double x = point.x + r.nextGaussian()*2;
+        double y = point.y + r.nextGaussian()*2;
+        double z = point.z + r.nextGaussian()*2;
 
         for(Tuple t : m.keySet()){
             double d_new = Math.sqrt( Math.pow(t.x - x,2) + Math.pow(t.y - y,2) + Math.pow(t.z - z,2));
             double d = m.get(t);
-            probability = probability * Z.cumulativeProbability(d-d_new);
+            pr_new = pr_new * Z.cumulativeProbability(d-d_new);
         }
 
-        double a = r.nextDouble();
+        for(Tuple t : m.keySet()){
+            double d_old = Math.sqrt( Math.pow(t.x - point.x,2) + Math.pow(t.y - point.y,2) + Math.pow(t.z - point.z,2));
+            double d = m.get(t);
+            pr_old = pr_old * Z.cumulativeProbability(d-d_old);
+        }
 
-        if ( a < probability) {
+        Random r2 = new Random();
+        double a = r2.nextDouble();
+
+        if ( a < pr_new / pr_old) {
             point.x = x;
             point.y = y;
             point.z = z;
         }
+
+        return pr_new/pr_old;
 
         /*
         // normalising factor
