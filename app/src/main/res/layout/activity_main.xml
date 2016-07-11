@@ -40,7 +40,12 @@
                 android:text="Your Position"
                 android:id="@+id/pos"
                 android:layout_weight="0.15" />
-
+            <com.example.melih.beacon_nav.CanvasView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/canvas"
+                android:textColor="#FF4040" />
+            android:layout_weight="0.57" />
         </LinearLayout>
 
     </LinearLayout>

@@ -10,12 +10,12 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.SurfaceView;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private Button scanBtn;
     private ListView listView;
     private TextView posView;
+    private CanvasView canvasView;
     private ArrayList<String> deviceFilter;
     private ArrayList<Integer> rssiValues = new ArrayList<>();
     private ArrayList<Map.Entry<String, ScanResult>>  list = new ArrayList<>();
@@ -62,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
         scanBtn = (Button) findViewById(R.id.scanBtn);
         listView = (ListView) findViewById(R.id.list);
         posView = (TextView) findViewById(R.id.pos);
+        canvasView = (CanvasView) findViewById(R.id.canvas);
+
         BTAdapter = getDefaultAdapter();
         BTLE = BTAdapter.getBluetoothLeScanner();
         deviceFilter = new ArrayList<>();
@@ -69,12 +72,6 @@ public class MainActivity extends AppCompatActivity {
         rssiValues = new ArrayList<>();
         progress = new ProgressDialog(this);
         progress.setMessage("Wait...");
-        // addresses to filter
-        deviceFilter.add("D0:30:AD:84:07:40");
-        deviceFilter.add("E0:2E:E2:ED:86:64");
-        deviceFilter.add("D0:8B:08:63:C4:61");
-        deviceFilter.add("FC:73:08:31:50:42");
-        deviceFilter.add("D4:22:FF:09:00:E9");
 
         point = new Tuple(3.0, 4.5, 3.0);
         Z = new NormalDistribution(0, 1);
@@ -94,13 +91,13 @@ public class MainActivity extends AppCompatActivity {
                 estimationMap = new HashMap<>();
 
                 positionCache.put("D0:30:AD:84:07:40", new LinkedList<Integer>());  //orta
-                positionMap.put("D0:30:AD:84:07:40", new Tuple(0.0, 0.0, 3.0));
+                positionMap.put("D0:30:AD:84:07:40", new Tuple(0.0, 13.6, 3.0));
 
                 positionCache.put("E0:2E:E2:ED:86:64", new LinkedList<Integer>());  //sağ
-                positionMap.put("E0:2E:E2:ED:86:64", new Tuple(9.0, 0.0, 3.0));
+                positionMap.put("E0:2E:E2:ED:86:64", new Tuple(9.0, 13.6, 3.0));
 
                 positionCache.put("FC:73:08:31:50:42", new LinkedList<Integer>());  //üst
-                positionMap.put("FC:73:08:31:50:42", new Tuple(0.0, 13.6, 3.0));
+                positionMap.put("FC:73:08:31:50:42", new Tuple(0.0, 0, 3.0));
 
                 positionCache.put("D0:8B:08:63:C4:61", new LinkedList<Integer>());  // arbitrary
                 positionMap.put("D0:8B:08:63:C4:61", new Tuple(0.0, 0.0, 0.0));
@@ -146,18 +143,22 @@ public class MainActivity extends AppCompatActivity {
 
                             Tuple pos= positionMap.get(address);
                             estimationMap.put(pos, calculateDistance(txp, getAverage(address)));
+                            canvasView.setBeaconList(estimationMap);
                             //estimationMap.put(pos, calculateDistance(txp, result.getRssi()));
                             double a = -1;
                             double avgX = 0;
                             double avgY = 0;
                             double avgZ = 0;
+                            List<Tuple> dotList = new LinkedList<Tuple>();
 
                             for(int j=0; j<1000; j++) {
                                 a = getPosition(estimationMap);
+                                dotList.add(new Tuple(point.x, point.y, point.z));
                                 avgX = avgX + point.x;
                                 avgY = avgY + point.y;
                                 avgZ = avgZ + point.z;
                             }
+                            canvasView.setDots(dotList);
 
                             point.x = avgX / 1000;
                             point.y = avgY / 1000;
