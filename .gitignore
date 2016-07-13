@@ -10,4 +10,9 @@
 *.iml
 .idea/workspace.xml
 .idea/libraries
-.idea/*.xml
+
+.idea/gradle.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+build.gradle
