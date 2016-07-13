@@ -10,3 +10,4 @@
 *.iml
 .idea/workspace.xml
 .idea/libraries
+.idea/*.xml
